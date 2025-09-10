@@ -2,10 +2,10 @@ name: Horusec Security Analysis
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ Horusec ]
   pull_request:
-    branches: [ "main" ]
-
+    branches: [ main ]
+    
 jobs:
   security:
     runs-on: ubuntu-latest

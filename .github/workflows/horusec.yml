@@ -1,0 +1,21 @@
+name: Horusec Security Analysis
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Horusec via Docker
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/src \
+            horuszup/horusec-cli horusec start -p /src -c /src/horusec-config.json

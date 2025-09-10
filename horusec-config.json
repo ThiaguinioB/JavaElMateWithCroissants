@@ -1,0 +1,11 @@
+{
+  "horusecCliCommands": [
+    {
+      "name": "default",
+      "path": "./src",
+      "analysisTimeout": 600,
+      "returnErrorIfFoundVulnerability": "HIGH",
+      "severityAnalysis": ["CRITICAL", "HIGH"]
+    }
+  ]
+}

@@ -1,36 +1,30 @@
 name: Horusec Security Analysis
 
 on:
-  pull_request:
-    branches: [ "main" ]
   push:
-    branches: [ "main" ]
+    branches: [ Horusec ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  horusec:
+  security:
     runs-on: ubuntu-latest
-    services:
-      docker:
-        image: docker:20.10-dind
-        ports:
-          - 2375:2375
-        options: --privileged   # 👈 acá va, y solo acá
-    steps:
-      - name: Checkout code #prueba 1
-        uses: actions/checkout@v3
 
-<<<<<<< Updated upstream
-      - name: Run Horusec with Docker
-        run: |
-          docker run --rm -v ${PWD}:/app horuszup/horusec-cli:latest `horusec start -p /app --disable-docker --output-format json --json-output-file /app/horusec-report.json
-=======
-      -       - name: Run Horusec via Docker
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Horusec via Docker
         run: |
           docker run --rm \
-            -v ${PWD}:/app \
+            -v ${{ github.workspace }}:/app \
             horuszup/horusec-cli:latest horusec start -p /app \
             --disable-docker \
             --output-format json \
             --json-output-file /app/horusec-report.json
 
->>>>>>> Stashed changes
+      - name: Upload Horusec Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: horusec-report
+          path: horusec-report.json

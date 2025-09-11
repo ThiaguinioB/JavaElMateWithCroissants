@@ -4,8 +4,9 @@
       "name": "default",
       "path": "./src",
       "analysisTimeout": 600,
-      "returnErrorIfFoundVulnerability": "HIGH",
+      "returnErrorIfFoundVulnerability": ["CRITICAL", "HIGH"],
       "severityAnalysis": ["CRITICAL", "HIGH"]
     }
+    
   ]
 }

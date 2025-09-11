@@ -23,6 +23,15 @@ jobs:
             --output-format json \
             --json-output-file /app/horusec-report.json
 
+      - name: Check for HIGH/CRITICAL vulnerabilities
+        run: |
+          if jq -e '.analysisVulnerabilities[].vulnerabilities.severity | select(.=="HIGH" or .=="CRITICAL")' horusec-report.json > /dev/null; then
+            echo "❌ Horusec encontró vulnerabilidades HIGH o CRITICAL"
+            exit 1
+          else
+            echo "✅ Solo vulnerabilidades LOW/MEDIUM o ninguna"
+          fi
+
       - name: Upload Horusec Report
         uses: actions/upload-artifact@v4
         with:

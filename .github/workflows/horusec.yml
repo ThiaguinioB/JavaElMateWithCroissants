@@ -2,7 +2,7 @@ name: Horusec Security Analysis
 
 on:
   pull_request:
-    branches: [ "main" ]   # o la rama que quieras proteger
+    branches: [ "main" ]
   push:
     branches: [ "main" ]
 
@@ -12,7 +12,6 @@ jobs:
     services:
       docker:
         image: docker:20.10-dind
-        privileged: true
         ports:
           - 2375:2375
         options: --privileged

@@ -19,6 +19,18 @@ jobs:
       - name: Checkout code #prueba 1
         uses: actions/checkout@v3
 
+<<<<<<< Updated upstream
       - name: Run Horusec with Docker
         run: |
           docker run --rm -v ${PWD}:/app horuszup/horusec-cli:latest `horusec start -p /app --disable-docker --output-format json --json-output-file /app/horusec-report.json
+=======
+      -       - name: Run Horusec via Docker
+        run: |
+          docker run --rm \
+            -v ${PWD}:/app \
+            horuszup/horusec-cli:latest horusec start -p /app \
+            --disable-docker \
+            --output-format json \
+            --json-output-file /app/horusec-report.json
+
+>>>>>>> Stashed changes

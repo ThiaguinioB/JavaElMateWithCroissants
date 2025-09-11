@@ -21,9 +21,4 @@ jobs:
 
       - name: Run Horusec with Docker
         run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/src \
-            horuszup/horusec-cli horusec start \
-            -p /src \
-            -c /src/horusec-config.json \
-            --return-error
+          docker run --rm -v ${PWD}:/app horuszup/horusec-cli:latest `horusec start -p /app --disable-docker --output-format json --json-output-file /app/horusec-report.json

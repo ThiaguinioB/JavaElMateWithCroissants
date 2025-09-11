@@ -1,22 +1,30 @@
 name: Horusec Security Analysis
 
 on:
-  push:
-    branches: [ Horusec ]
   pull_request:
-    branches: [ main ]
-    
-jobs:
-  security:
-    runs-on: ubuntu-latest
+    branches: [ "main" ]   # o la rama que quieras proteger
+  push:
+    branches: [ "main" ]
 
+jobs:
+  horusec:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:20.10-dind
+        privileged: true
+        ports:
+          - 2375:2375
+        options: --privileged
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Run Horusec via Docker
+      - name: Run Horusec with Docker
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:/src \
-            horuszup/horusec-cli horusec start -p /src -c /src/horusec-config.json
-
+            horuszup/horusec-cli horusec start \
+            -p /src \
+            -c /src/horusec-config.json \
+            --return-error

@@ -16,7 +16,7 @@ jobs:
           - 2375:2375
         options: --privileged   # 👈 acá va, y solo acá
     steps:
-      - name: Checkout code
+      - name: Checkout code #prueba 1
         uses: actions/checkout@v3
 
       - name: Run Horusec with Docker

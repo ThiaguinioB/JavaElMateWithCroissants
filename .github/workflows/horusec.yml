@@ -28,7 +28,7 @@ jobs:
               --json-output-file /app/horusec-report.json
 
       - name: Upload Horusec report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always() # sube el reporte aunque falle el job
         with:
           name: horusec-report

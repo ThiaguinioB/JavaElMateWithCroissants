@@ -1,10 +1,10 @@
 name: Horusec Security Analysis
 
 on:
-  push:
-    branches: [ "docker-compose/horusec" ]
   pull_request:
     branches: [ "main" ]
+  push:
+    branches: [ "docker-compose/horusec" ]
 
 jobs:
   horusec:
@@ -16,20 +16,20 @@ jobs:
 
       - name: Run Horusec CLI (JSON output + blocking)
         run: |
+          mkdir -p .horusec
           docker run --rm \
             -v ${{ github.workspace }}:/app \
             horuszup/horusec-cli:latest \
             horusec start \
               -p /app \
               --disable-docker \
-              --config-file-path=/app/horusec-config.json \
-              --return-error \ # 👈 fuerza exit code 1 si hay CRITICAL/HIGH
+              --return-error \
               --output-format json \
-              --json-output-file /app/horusec-report.json
+              --json-output-file /app/.horusec/horusec-report.json
 
       - name: Upload Horusec report
         uses: actions/upload-artifact@v4
-        if: always() # sube el reporte aunque falle el job
+        if: always()
         with:
           name: horusec-report
-          path: horusec-report.json
+          path: .horusec/horusec-report.json

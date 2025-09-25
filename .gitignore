@@ -42,3 +42,18 @@ build/
 
 # IntelliJ coverage
 .idea/**/coverage/
+
+# .env
+.env
+
+# Horusec
+src/.horusec/
+
+# databases
+init-databases.sql
+
+# logHorusec
+logHorusec.html
+
+# docker-compose.horusec-platform.yml
+docker-compose.horusec-platform.yml

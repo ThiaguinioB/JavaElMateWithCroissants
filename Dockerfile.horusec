@@ -1,0 +1,17 @@
+FROM horuszup/horusec-cli:v2.9.0-beta.3
+
+RUN apk add --no-cache docker jq
+
+COPY validate_thresholds.sh /usr/local/bin/validate_thresholds.sh
+RUN chmod +x /usr/local/bin/validate_thresholds.sh
+
+WORKDIR /src
+
+CMD ["sh", "-c", "\
+    horusec start \
+    --project-path /src \
+    --container-bind-project-path=/src \
+    -o=json \
+    -O /src/.horusec/output.json \
+    --log-level=debug && \
+    validate_thresholds.sh"]

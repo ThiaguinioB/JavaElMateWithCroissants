@@ -1,0 +1,16 @@
+services:
+  horusec-cli:
+    build:
+      context: .
+      dockerfile: Dockerfile.horusec
+    environment:
+      - HOST_PROJECT_PATH=${PWD}
+      - HORUSEC_MAX_CRITICAL_VULNERABILITY
+      - HORUSEC_MAX_HIGH_VULNERABILITY
+      - HORUSEC_MAX_MEDIUM_VULNERABILITY
+      - HORUSEC_MAX_LOW_VULNERABILITY
+    volumes:
+      - .:/src
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./src/.horusec:/src/.horusec # 👈 asegura que el .json vaya al host
+    working_dir: /src

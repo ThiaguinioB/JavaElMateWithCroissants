@@ -32,6 +32,7 @@ jobs:
       - name: Ejecutar análisis Horusec
         run: |
           docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \  # ← Esto es clave
             -v ${{ github.workspace }}:/src \
             horuszup/horusec-cli horusec start \
             -p /src \

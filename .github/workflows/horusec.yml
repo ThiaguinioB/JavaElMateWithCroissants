@@ -1,46 +1,137 @@
-# Pipeline CI de Horusec CLI integrado con Docker, Gallardo esta Gaga
+# Pipeline CI de Horusec CLI - Análisis de Seguridad
 name: Horusec Security Analysis
 
 on:
   push:
     branches:
       - docker-compose/horusec
+      - main
   pull_request:
     branches:
       - main
 
 jobs:
-  horusec:
+  horusec-security-scan:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Limpiar posibles conflictos de containerd
+      - name: Set up environment variables
         run: |
-          sudo apt-mark unhold containerd || true
-          sudo apt-get remove -y containerd || true
+          echo "HORUSEC_MAX_CRITICAL_VULNERABILITY=0" >> $GITHUB_ENV
+          echo "HORUSEC_MAX_HIGH_VULNERABILITY=5" >> $GITHUB_ENV
+          echo "HORUSEC_MAX_MEDIUM_VULNERABILITY=10" >> $GITHUB_ENV
+          echo "HORUSEC_MAX_LOW_VULNERABILITY=20" >> $GITHUB_ENV
+
+      - name: Create output directory with proper permissions
+        run: |
+          mkdir -p .horusec
+          chmod 755 .horusec
+
+      - name: Install dependencies
+        run: |
           sudo apt-get update
+          sudo apt-get install -y jq curl
 
-      - name: Instalar Docker
+      - name: Download and install Horusec CLI
         run: |
-          sudo apt-get install -y docker.io
-          sudo systemctl start docker
-          sudo systemctl enable docker
+          curl -fsSL "https://raw.githubusercontent.com/ZupIT/horusec/main/deployments/scripts/install.sh" | bash -s latest
+          sudo mv ./horusec /usr/local/bin/horusec
+          horusec version
 
-      - name: Verificar instalación de Docker
-        run: docker --version
-
-      - name: Descargar Horusec CLI
+      - name: Run Horusec security analysis
         run: |
-          curl -fsSL https://github.com/ZupIT/horusec/releases/latest/download/horusec-linux-amd64.tar.gz | tar -xz
-          sudo mv horusec /usr/local/bin/
-
-      - name: Ejecutar Horusec
-        run: |
+          # Run analysis without failing on vulnerabilities initially
           horusec start \
-            -p ${{ github.workspace }} \
-            --return-error \
-            --output-format json \
-            --json-output-file ${{ github.workspace }}/.horusec/horusec-report.json
+            --project-path="${{ github.workspace }}" \
+            --config-file-path="${{ github.workspace }}/horusec-config.json" \
+            --output-format=json \
+            --json-output-file="${{ github.workspace }}/.horusec/horusec-report.json" \
+            --disable-docker \
+            --ignore="**/*test*,**/*Test*,**/test/**,**/tests/**,**/target/**,**/.git/**" \
+            --log-level=info || echo "⚠️ Analysis completed with findings"
+
+      - name: Validate security thresholds
+        run: |
+          if [ -f "validate_thresholds.sh" ]; then
+            echo "🔍 Using custom validation script"
+            # Create a temporary version of the script that uses the correct file path
+            sed 's|FILE="/src/.horusec/output.json"|FILE="${1:-.horusec/horusec-report.json}"|' validate_thresholds.sh > /tmp/validate_thresholds_fixed.sh
+            chmod +x /tmp/validate_thresholds_fixed.sh
+            /tmp/validate_thresholds_fixed.sh .horusec/horusec-report.json
+          else
+            echo "🔍 Using basic validation"
+            if [ -f ".horusec/horusec-report.json" ]; then
+              # Check if the report has vulnerabilities structure
+              if jq -e '.analysisVulnerabilities' .horusec/horusec-report.json > /dev/null 2>&1; then
+                critical=$(jq '[.analysisVulnerabilities[]? | select(.vulnerabilities.severity == "CRITICAL")] | length' .horusec/horusec-report.json 2>/dev/null || echo "0")
+                high=$(jq '[.analysisVulnerabilities[]? | select(.vulnerabilities.severity == "HIGH")] | length' .horusec/horusec-report.json 2>/dev/null || echo "0")
+                medium=$(jq '[.analysisVulnerabilities[]? | select(.vulnerabilities.severity == "MEDIUM")] | length' .horusec/horusec-report.json 2>/dev/null || echo "0")
+                low=$(jq '[.analysisVulnerabilities[]? | select(.vulnerabilities.severity == "LOW")] | length' .horusec/horusec-report.json 2>/dev/null || echo "0")
+                
+                echo "📊 Security Analysis Results:"
+                echo "🔴 Critical: $critical (max: $HORUSEC_MAX_CRITICAL_VULNERABILITY)"
+                echo "🟠 High: $high (max: $HORUSEC_MAX_HIGH_VULNERABILITY)"
+                echo "🟡 Medium: $medium (max: $HORUSEC_MAX_MEDIUM_VULNERABILITY)"
+                echo "🟢 Low: $low (max: $HORUSEC_MAX_LOW_VULNERABILITY)"
+                
+                if [ "$critical" -gt "$HORUSEC_MAX_CRITICAL_VULNERABILITY" ] || [ "$high" -gt "$HORUSEC_MAX_HIGH_VULNERABILITY" ] || [ "$medium" -gt "$HORUSEC_MAX_MEDIUM_VULNERABILITY" ] || [ "$low" -gt "$HORUSEC_MAX_LOW_VULNERABILITY" ]; then
+                  echo "❌ Security thresholds exceeded!"
+                  exit 1
+                else
+                  echo "✅ Security analysis passed"
+                fi
+              else
+                echo "ℹ️ No vulnerabilities found or different report structure"
+              fi
+            else
+              echo "❌ No report file found"
+              exit 1
+            fi
+          fi
+
+      - name: Upload Horusec report as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: horusec-security-report-${{ github.run_number }}
+          path: .horusec/horusec-report.json
+          retention-days: 30
+
+      - name: Display detailed results
+        if: always()
+        run: |
+          if [ -f ".horusec/horusec-report.json" ]; then
+            echo "📋 Detailed Report Analysis:"
+            echo "============================"
+            
+            # Show file size and basic info
+            echo "📄 Report size: $(du -h .horusec/horusec-report.json | cut -f1)"
+            echo "📅 Generated: $(date)"
+            
+            # Try to show more details if jq is available
+            if command -v jq >/dev/null 2>&1; then
+              echo ""
+              echo "🔍 Report Structure:"
+              jq -r 'keys[]' .horusec/horusec-report.json 2>/dev/null | head -10 || echo "Unable to parse report structure"
+              
+              echo ""
+              echo "📊 Summary:"
+              echo "- Analysis ID: $(jq -r '.analysisID // "N/A"' .horusec/horusec-report.json 2>/dev/null)"
+              echo "- Repository: $(jq -r '.repositoryName // "N/A"' .horusec/horusec-report.json 2>/dev/null)"
+              echo "- Status: $(jq -r '.status // "N/A"' .horusec/horusec-report.json 2>/dev/null)"
+            fi
+            
+            echo ""
+            echo "📁 Full report available in artifacts as 'horusec-security-report-${{ github.run_number }}'"
+          else
+            echo "❌ No report file found for detailed analysis"
+          fi

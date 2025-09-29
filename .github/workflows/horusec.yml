@@ -36,14 +36,14 @@ jobs:
           
           # Ejecutar Horusec CLI en container Docker
           docker run --rm \
-            -v ${{ github.workspace }}:/app \              # Montar workspace como volumen
-            horuszup/horusec-cli:latest \                   # Usar imagen oficial de Horusec
-            horusec start \                                 # Comando principal de análisis
-              -p /app \                                     # Path del proyecto a analizar
-              --disable-docker \                            # Deshabilitar análisis de Docker (opcional)
-              --return-error \                              # Retornar error si hay vulnerabilidades críticas
-              --output-format json \                        # Formato de salida JSON para procesamiento
-              --json-output-file /app/.horusec/horusec-report.json  # Archivo de salida del reporte
+            -v ${{ github.workspace }}:/app \
+            horuszup/horusec-cli:latest \
+            horusec start \
+              -p /app \
+              --disable-docker \
+              --return-error \
+              --output-format json \
+              --json-output-file /app/.horusec/horusec-report.json
 
       # 📋 Step 3: Subir reporte como artifact para descarga y revisión
       - name: Upload Horusec report
@@ -51,4 +51,4 @@ jobs:
         if: always()                        # Ejecutar siempre, incluso si hay errores
         with:
           name: horusec-report             # Nombre del artifact
-          path: horusec-report.json        # Archivo a subir (disponible para descarga desde GitHub)
+          path: .horusec/horusec-report.json  # Archivo a subir (disponible para descarga desde GitHub)

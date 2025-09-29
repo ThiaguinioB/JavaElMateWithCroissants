@@ -32,7 +32,7 @@ jobs:
       - name: Run Horusec CLI (JSON output + blocking)
         run: |
           # Crear directorio para almacenar el reporte
-          mkdir -p /app/.horusec
+          sudo mkdir -p /app/.horusec
           
           # Ejecutar Horusec CLI en container Docker
           docker run --rm \

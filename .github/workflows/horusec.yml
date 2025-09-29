@@ -32,6 +32,11 @@ jobs:
       - name: Create Horusec report directory
         run: sudo mkdir -p /app/.horusec
 
+      - name: Install Horusec CLI
+        run: |
+          curl -fsSL https://github.com/ZupIT/horusec/releases/latest/download/horusec-linux-amd64 -o /usr/local/bin/horusec
+          chmod +x /usr/local/bin/horusec
+
       - name: Run Horusec CLI
         run: |
           horusec start \

@@ -123,6 +123,40 @@ HORUSEC_MANAGER_URL=http://localhost:8043
 
 ## 🔧 Comandos Útiles
 
+### GitHub Actions Workflow (Automatizado)
+
+El workflow se ejecuta automáticamente en:
+- Push a rama `docker-compose/horusec`
+- Pull requests a `main`
+
+**Estructura del workflow final (después del debugging):**
+```yaml
+# Instala Horusec usando script oficial
+curl -fsSL "https://raw.githubusercontent.com/ZupIT/horusec/main/deployments/scripts/install.sh" | bash -s latest
+
+# Crea directorio que persiste (NO .horusec)
+mkdir -p reports
+
+# Ejecuta análisis guardando en directorio persistente
+horusec start --json-output-file="reports/horusec-report.json"
+
+# Copia para compatibilidad con scripts existentes
+cp reports/horusec-report.json .horusec/horusec-report.json
+
+# Valida usando script personalizado
+./validate_thresholds.sh .horusec/horusec-report.json
+```
+
+**Para debugging del workflow:**
+```bash
+# Ver logs del último workflow
+gh run list --repo ThiaguinioB/JavaElMateWithCroissants
+gh run view [ID] --log
+
+# Re-ejecutar workflow fallido
+gh run rerun [ID]
+```
+
 ### Análisis Local
 ```bash
 # Ejecutar análisis único
@@ -133,6 +167,11 @@ docker-compose -f docker-compose.horusec.yml logs -f
 
 # Limpiar contenedores y volúmenes
 docker-compose -f docker-compose.horusec.yml down -v
+
+# Probar localmente el comportamiento de Horusec
+mkdir -p test-reports
+docker run --rm -v $(pwd):/src horuszup/horusec-cli:latest \
+  horusec start -p /src --json-output-file=/src/test-reports/local-test.json
 ```
 
 ### Plataforma Completa
@@ -189,18 +228,71 @@ docker run --rm -v $(pwd):/src horuszup/horusec-cli:v2.9.0-beta.3 \
 
 ## 🚨 Resolución de Problemas
 
-### Problemas Comunes
+### 🔥 Problemas Críticos en GitHub Actions (Caso de Estudio Real)
+
+**Contexto**: Durante 4 horas de debugging intenso, encontramos problemas específicos con la integración de Horusec en GitHub Actions que documentamos aquí.
+
+#### **Cronología del Debugging (Septiembre 29, 2025)**
+
+**22:40 - Primer Intento**: Error de instalación duplicada
+```
+mv: cannot stat './horusec': No such file or directory
+```
+**Causa**: Script oficial ya instala Horusec, pero workflow intentaba moverlo nuevamente.
+
+**22:51 - Segundo Intento**: Horusec se instala pero no genera reporte
+```
+Error: {HORUSEC_CLI} error creating and/or writing to the specified file
+```
+**Causa**: Problemas de permisos en directorio de salida.
+
+**23:00 - Tercer Intento**: Directorio creado pero reporte desaparece
+```
+❌ Output file is empty or missing: .horusec/horusec-report.json
+Directory .horusec does not exist
+```
+**Causa**: **Horusec elimina automáticamente el directorio `.horusec`** después del análisis.
+
+#### **Solución Final Implementada**
+
+```yaml
+# ✅ SOLUCIÓN QUE FUNCIONA
+- name: Run Horusec security analysis
+  run: |
+    # Usar directorio 'reports/' que NO elimina Horusec
+    mkdir -p reports
+    chmod 755 reports
+    
+    horusec start \
+      --json-output-file="reports/horusec-report.json" \
+      [otros parámetros...]
+    
+    # Copiar para compatibilidad con scripts existentes
+    mkdir -p .horusec
+    cp reports/horusec-report.json .horusec/horusec-report.json
+```
+
+#### **Lecciones Aprendidas**
+
+1. **📚 Leer toda la documentación**: Horusec limpia automáticamente, no es obvio
+2. **🧪 Probar localmente primero**: `docker run` reproduce el problema
+3. **📋 Logs completos**: El contexto importa más que el error final
+4. **🔄 Iteración sistemática**: Un problema a la vez, documentar cada intento
+
+### Problemas Comunes en Docker
 
 #### 1. Error "Invalid JSON in output file"
 ```bash
 # Verificar que el contenedor tenga permisos de escritura
-chmod 755 .horusec/
+chmod 755 reports/  # Usar directorio que persiste
 ```
 
 #### 2. "Vulnerability threshold exceeded"
 ```bash
 # Ajustar los umbrales en variables de entorno o
 # Revisar y corregir las vulnerabilidades encontradas
+export HORUSEC_MAX_CRITICAL_VULNERABILITY=0
+export HORUSEC_MAX_HIGH_VULNERABILITY=5
 ```
 
 #### 3. Servicios no pueden conectarse (plataforma completa)
@@ -217,6 +309,16 @@ docker-compose -f docker-compose.horusec-platform.yml restart
 # Cambiar puertos en docker-compose.yml o
 # Liberar puertos ocupados
 sudo lsof -ti:8043 | xargs kill -9
+```
+
+#### 5. Horusec elimina archivos automáticamente
+```bash
+# ❌ NO usar .horusec/ para salida persistente
+horusec start --json-output-file=".horusec/report.json"
+
+# ✅ Usar directorio que persiste
+mkdir -p reports
+horusec start --json-output-file="reports/report.json"
 ```
 
 ### Logs de Debugging

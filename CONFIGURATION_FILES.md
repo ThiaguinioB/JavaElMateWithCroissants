@@ -41,6 +41,69 @@ Automatiza el análisis de seguridad en el pipeline de CI/CD usando GitHub Actio
 Los reportes se almacenan como artifacts de GitHub, accesibles desde:
 `Actions > [Run específico] > Artifacts > horusec-report`
 
+### 🔬 Evolución del Workflow (Caso de Estudio Real)
+
+**Contexto**: Este workflow pasó por muchas horas de debugging intenso. Documentamos todo el proceso para ayudar a futuros desarrolladores.
+
+#### **Iteración 1 - Fallo de Instalación**
+```yaml
+# ❌ PROBLEMA: Instalación duplicada
+- name: Download and install Horusec CLI
+  run: |
+    curl -fsSL "https://raw.githubusercontent.com/ZupIT/horusec/main/deployments/scripts/install.sh" | bash -s latest
+    sudo mv ./horusec /usr/local/bin/horusec  # ← Causaba error
+    horusec start --json-output-file=".horusec/horusec-report.json"
+```
+**Error**: `mv: cannot stat './horusec': No such file or directory`  
+**Causa**: El script oficial ya instala Horusec en `/usr/local/bin/horusec`
+
+#### **Iteración 2 - Permisos de Directorio **
+```yaml
+# ❌ PROBLEMA: Permisos insuficientes
+- name: Run Horusec
+  run: |
+    mkdir -p .horusec
+    horusec start --json-output-file=".horusec/horusec-report.json"
+```
+**Error**: `error creating and/or writing to the specified file`  
+**Causa**: Problemas de permisos en GitHub Actions
+
+#### **Iteración 3 - Directorio Desaparece**
+```yaml
+# ❌ PROBLEMA: Horusec elimina directorio automáticamente
+- name: Run Horusec
+  run: |
+    mkdir -p .horusec
+    chmod 755 .horusec
+    horusec start --json-output-file=".horusec/horusec-report.json"
+```
+**Error**: `Directory .horusec does not exist`  
+**Causa**: Horusec limpia automáticamente el directorio `.horusec` después del análisis
+
+#### **Solución Final - Directorio Persistente**
+```yaml
+# ✅ SOLUCIÓN: Usar directorio que persiste
+- name: Run Horusec security analysis
+  run: |
+    mkdir -p reports  # Directorio que NO elimina Horusec
+    chmod 755 reports
+    
+    horusec start \
+      --json-output-file="reports/horusec-report.json"
+    
+    # Copiar a .horusec para compatibilidad con scripts
+    mkdir -p .horusec
+    cp reports/horusec-report.json .horusec/horusec-report.json
+```
+
+#### **Lecciones Críticas Aprendidas**
+
+1. **📖 RTFM (Read The F*cking Manual)**: Horusec tiene comportamientos no documentados claramente
+2. **🧪 Test Locally First**: `docker run` localmente reprodujo el problema
+3. **📋 Full Context Matters**: Los logs completos revelan más que el error final
+4. **🔄 Systematic Debugging**: Un problema a la vez, documentar cada intento
+5. **💾 Persistence Strategy**: Entender qué directorios persisten vs. se eliminan
+
 ---
 
 ## 🐳 Docker Compose CI/CD {#docker-compose-cicd}
@@ -300,13 +363,129 @@ export HORUSEC_MAX_LOW_VULNERABILITY=5
 
 ## 🚨 Troubleshooting
 
-### Problemas Comunes
+### Problemas Comunes en GitHub Actions (Experiencia Real de 4 Horas de Debugging)
+
+Durante la implementación del workflow de Horusec, encontramos varios problemas críticos que documentamos aquí para futuras referencias:
+
+#### 🔥 **Problema 1: Error de Instalación Duplicada**
+**Error**: `mv: cannot stat './horusec': No such file or directory`
+
+**Causa**: El script oficial de instalación de Horusec ya instala el binario en `/usr/local/bin/horusec`, pero nuestro workflow intentaba moverlo nuevamente.
+
+**Solución**:
+```yaml
+# ❌ INCORRECTO - Causaba error
+- name: Download and install Horusec CLI
+  run: |
+    curl -fsSL "https://raw.githubusercontent.com/ZupIT/horusec/main/deployments/scripts/install.sh" | bash -s latest
+    sudo mv ./horusec /usr/local/bin/horusec  # ← Esta línea causaba el fallo
+    horusec version
+
+# ✅ CORRECTO - Sin línea duplicada
+- name: Download and install Horusec CLI
+  run: |
+    curl -fsSL "https://raw.githubusercontent.com/ZupIT/horusec/main/deployments/scripts/install.sh" | bash -s latest
+    horusec version  # El script ya instala Horusec correctamente
+```
+
+**Lección**: Siempre revisar qué hace exactamente un script antes de agregar pasos adicionales.
+
+---
+
+#### 🔥 **Problema 2: Directorio de Salida Eliminado Automáticamente**
+**Error**: `open /path/.horusec/horusec-report.json: no such file or directory`
+
+**Causa**: Horusec **SIEMPRE** elimina el directorio `.horusec` después del análisis, como indica en sus logs:
+> "Don't worry, we'll remove it after the analysis ends automatically!"
+
+**Solución Fallida #1**: Crear el directorio antes del análisis
+```yaml
+# ❌ NO FUNCIONABA - El directorio se eliminaba
+mkdir -p .horusec
+chmod 755 .horusec
+horusec start --json-output-file=".horusec/horusec-report.json"  # Se perdía
+```
+
+**Solución Fallida #2**: Crear el directorio con permisos especiales
+```yaml
+# ❌ TAMPOCO FUNCIONABA - Horusec lo eliminaba de todas formas
+sudo mkdir -p .horusec
+sudo chmod 755 .horusec
+```
+
+**Solución Final ✅**: Usar directorio separado que persista
+```yaml
+# ✅ FUNCIONA - Directorio que NO elimina Horusec
+mkdir -p reports
+horusec start --json-output-file="reports/horusec-report.json"
+# Luego copiar para compatibilidad con scripts existentes
+cp reports/horusec-report.json .horusec/horusec-report.json
+```
+
+**Lección**: Leer TODA la documentación y logs de las herramientas. Horusec tiene comportamientos específicos que no son obvios.
+
+---
+
+#### 🔥 **Problema 3: Permisos en GitHub Actions**
+**Error**: `Permission denied` al crear directorios
+
+**Causa**: Los runners de GitHub Actions tienen restricciones de permisos específicas.
+
+**Solución**:
+```yaml
+# ✅ Permisos correctos para GitHub Actions
+permissions:
+  contents: read
+  security-events: write  # Necesario para reportes de seguridad
+  actions: read
+```
+
+**Lección**: GitHub Actions requiere permisos explícitos para ciertas operaciones.
+
+---
+
+### Proceso de Debugging Recomendado
+
+Basado en nuestra experiencia de 4 horas, recomendamos este proceso:
+
+1. **🔍 Leer logs completos** - No solo el error final, sino todo el contexto
+2. **📋 Verificar comportamiento de herramientas** - Muchas eliminan archivos automáticamente
+3. **🧪 Probar localmente primero** - `docker run` antes de GitHub Actions
+4. **📝 Documentar cada intento** - Evita repetir soluciones fallidas
+5. **🚀 Implementar en etapas** - Un problema a la vez
+
+### Herramientas de Debugging para GitHub Actions
+
+```yaml
+# Mostrar estructura de directorios
+- name: Debug - Show directory structure  
+  run: |
+    echo "=== Current directory ==="
+    pwd
+    echo "=== Directory contents ==="
+    ls -la
+    echo "=== .horusec directory ==="
+    ls -la .horusec/ || echo "Directory doesn't exist"
+
+# Verificar variables de entorno
+- name: Debug - Show environment
+  run: env | grep HORUSEC
+
+# Verificar permisos
+- name: Debug - Check permissions
+  run: |
+    whoami
+    groups
+    ls -la $(dirname $(which horusec))
+```
+
+### Otros Problemas Comunes
 
 1. **Error "Invalid JSON"**
-   - Verificar permisos de escritura en `.horusec/`
+   - Verificar permisos de escritura en directorios de salida
    - Comprobar que el contenedor no se queda sin espacio
 
-2. **Servicios no conectan**
+2. **Servicios no conectan (Docker Compose)**
    - Verificar que PostgreSQL y RabbitMQ están healthy
    - Revisar logs: `docker-compose logs [servicio]`
 
@@ -314,7 +493,7 @@ export HORUSEC_MAX_LOW_VULNERABILITY=5
    - Verificar variables de entorno están configuradas
    - Revisar sintaxis del script de validación
 
-4. **GitHub Actions falla**
+4. **Workflow no se ejecuta**
    - Verificar que la rama trigger es correcta
    - Comprobar permisos de Actions en el repositorio
 

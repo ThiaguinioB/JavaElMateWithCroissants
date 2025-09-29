@@ -1,5 +1,5 @@
 # 🔒 GitHub Actions Workflow para Análisis de Seguridad con Horusec CLI
-# 
+#
 # Este workflow ejecuta automáticamente un análisis de seguridad SAST (Static Application Security Testing)
 # utilizando Horusec CLI cada vez que hay cambios en el código.
 #
@@ -28,25 +28,24 @@ jobs:
         uses: actions/checkout@v4
         # Descarga todo el código del repositorio para que Horusec pueda analizarlo
 
-      # 🔍 Step 2: Ejecutar análisis de seguridad con Horusec CLI
-      - name: Create Horusec report directory
-        run: sudo mkdir -p /app/.horusec
+      # 🔍 Step 2: Crear directorio para el reporte de Horusec
+      - name: Crear directorio para reporte Horusec
+        run: mkdir -p .horusec
 
-      - name: Install Horusec CLI
+      # 🐳 Step 3: Ejecutar análisis de seguridad con Horusec usando Docker
+      - name: Ejecutar Horusec con Docker
+        # Usamos la imagen oficial de Horusec para evitar problemas de descarga de binarios
         run: |
-          curl -fsSL https://github.com/ZupIT/horusec/releases/latest/download/horusec-linux-amd64 -o /usr/local/bin/horusec
-          chmod +x /usr/local/bin/horusec
+          docker run --rm \
+            -v ${{ github.workspace }}:/src \
+            horuszup/horusec-cli horusec start \
+              -p /src \
+              --return-error \
+              --output-format json \
+              --json-output-file /src/.horusec/horusec-report.json
+        # Así evitamos el error 404 por la descarga del binario
 
-      - name: Run Horusec CLI
-        run: |
-          horusec start \
-            -p /app \
-            --disable-docker \
-            --return-error \
-            --output-format json \
-            --json-output-file /app/.horusec/horusec-report.json
-
-      # 📋 Step 3: Subir reporte como artifact para descarga y revisión
+      # 📋 Step 4: Subir reporte como artifact para descarga y revisión
       - name: Upload Horusec report
         uses: actions/upload-artifact@v4
         if: always()                        # Ejecutar siempre, incluso si hay errores

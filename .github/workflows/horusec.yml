@@ -25,14 +25,14 @@ jobs:
     steps:
       # 📦 Step 1: Obtener el código fuente del repositorio
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         # Descarga todo el código del repositorio para que Horusec pueda analizarlo
 
       # 🔍 Step 2: Ejecutar análisis de seguridad con Horusec CLI
       - name: Run Horusec CLI (JSON output + blocking)
         run: |
           # Crear directorio para almacenar el reporte
-          mkdir -p .horusec
+          mkdir -p /app/.horusec
           
           # Ejecutar Horusec CLI en container Docker
           docker run --rm \

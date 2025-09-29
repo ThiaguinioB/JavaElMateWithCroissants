@@ -29,21 +29,17 @@ jobs:
         # Descarga todo el código del repositorio para que Horusec pueda analizarlo
 
       # 🔍 Step 2: Ejecutar análisis de seguridad con Horusec CLI
-      - name: Run Horusec CLI (JSON output + blocking)
+      - name: Create Horusec report directory
+        run: mkdir -p /app/.horusec
+
+      - name: Run Horusec CLI
         run: |
-          # Crear directorio para almacenar el reporte
-          sudo mkdir -p /app/.horusec
-          
-          # Ejecutar Horusec CLI en container Docker
-          docker run --rm \
-            -v ${{ github.workspace }}:/app \
-            horuszup/horusec-cli:latest \
-            horusec start \
-              -p /app \
-              --disable-docker \
-              --return-error \
-              --output-format json \
-              --json-output-file /app/.horusec/horusec-report.json
+          horusec start \
+            -p /app \
+            --disable-docker \
+            --return-error \
+            --output-format json \
+            --json-output-file /app/.horusec/horusec-report.json
 
       # 📋 Step 3: Subir reporte como artifact para descarga y revisión
       - name: Upload Horusec report

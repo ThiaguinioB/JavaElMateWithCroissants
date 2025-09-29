@@ -29,12 +29,13 @@ jobs:
           sudo systemctl enable docker
       - name: Verificar Docker
         run: docker ps
-      - name: Ejecutar análisis Horusec
+      - name: Run Horusec CLI
         run: |
-          docker run --rm \
-            -v /var/run/docker.sock:/var/run/docker.sock \  # ← Esto es clave
+          docker run \
+            -v /var/run/docker.sock:/var/run/docker.sock \
             -v ${{ github.workspace }}:/src \
-            horuszup/horusec-cli horusec start \
+            horuszup/horusec-cli \
+            horusec start \
             -p /src \
             --return-error \
             --output-format json \

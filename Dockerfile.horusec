@@ -1,17 +1,45 @@
+# 🐳 Dockerfile personalizado para Horusec CLI con validación de umbrales
+#
+# Este Dockerfile extiende la imagen oficial de Horusec CLI añadiendo:
+# - Herramientas adicionales (Docker, jq) para procesamiento de reportes
+# - Script personalizado de validación de umbrales de vulnerabilidades
+# - Configuración automatizada para análisis y validación en un solo paso
+#
+# Uso: docker build -f Dockerfile.horusec -t custom-horusec .
+#      docker run -v $(pwd):/src custom-horusec
+
+# 📦 Imagen base: Horusec CLI oficial (versión beta con mejoras)
 FROM horuszup/horusec-cli:v2.9.0-beta.3
 
-RUN apk add --no-cache docker jq
+# 🛠️ Instalar herramientas adicionales necesarias
+RUN apk add --no-cache \
+    docker \
+    jq
+# docker: Para análisis de contenedores Docker
+# jq: Para procesamiento de JSON en el script de validación
 
+# 📋 Copiar script de validación personalizado
 COPY validate_thresholds.sh /usr/local/bin/validate_thresholds.sh
 RUN chmod +x /usr/local/bin/validate_thresholds.sh
 
+# 📁 Establecer directorio de trabajo
 WORKDIR /src
 
+# 🚀 Comando por defecto: Ejecutar análisis + validación en secuencia
 CMD ["sh", "-c", "\
-    horusec start \
-    --project-path /src \
-    --container-bind-project-path=/src \
-    -o=json \
-    -O /src/.horusec/output.json \
-    --log-level=debug && \
+    horusec start \                                     
+    --project-path /src \                               
+    --container-bind-project-path=/src \                
+    -o=json \                                           
+    -O /src/.horusec/output.json \                      
+    --log-level=debug && \                              
     validate_thresholds.sh"]
+
+# 📝 Explicación de parámetros de Horusec:
+# --project-path: Ruta del proyecto a analizar
+# --container-bind-project-path: Ruta de binding para containers
+# -o=json: Formato de salida JSON
+# -O: Archivo de salida del reporte
+# --log-level=debug: Nivel de logging detallado
+#
+# El operador && ejecuta validate_thresholds.sh solo si Horusec termina exitosamente

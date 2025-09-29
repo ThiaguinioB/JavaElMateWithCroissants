@@ -3,7 +3,7 @@ name: Horusec Security Analysis
 on:
   push:
     branches:
-      - main
+      - docker-compose/horusec
   pull_request:
     branches:
       - main

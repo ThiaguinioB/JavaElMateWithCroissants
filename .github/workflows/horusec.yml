@@ -1,42 +1,40 @@
-# 🔒 GitHub Actions Workflow para Análisis de Seguridad con Horusec CLI
-#
-# Este workflow ejecuta automáticamente un análisis de seguridad SAST (Static Application Security Testing)
-# utilizando Horusec CLI cada vez que hay cambios en el código.
-#
-# Características principales:
-# - Análisis completo del código fuente en busca de vulnerabilidades de seguridad
-# - Generación de reportes en formato JSON para procesamiento automatizado
-# - Bloqueo del pipeline si se detectan vulnerabilidades críticas
-# - Almacenamiento de reportes como artifacts de GitHub para revisión posterior
-
 name: Horusec Security Analysis
 
-# 🎯 Triggers: Define cuándo se ejecuta el workflow
 on:
   push:
-    branches: [ "docker-compose/horusec" ]  # Se ejecuta en push a la rama de desarrollo
+    branches:
+      - main
   pull_request:
-    branches: [ "main" ]                    # Se ejecuta en PRs hacia main para validar antes del merge
+    branches:
+      - main
 
 jobs:
-  horusec-security:
+  horusec:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Reiniciar Docker
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Instalar Docker
         run: |
-          sudo systemctl restart docker
+          sudo apt-get update
+          sudo apt-get install -y docker.io
+          sudo systemctl start docker
           sudo systemctl enable docker
-      - name: Verificar Docker
-        run: docker ps
-      - name: Run Horusec CLI
+
+      - name: Verificar instalación de Docker
+        run: docker --version
+
+      - name: Descargar Horusec CLI
         run: |
-          docker run \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -v ${{ github.workspace }}:/src \
-            horuszup/horusec-cli \
-            horusec start \
-            -p /src \
+          curl -fsSL https://github.com/ZupIT/horusec/releases/latest/download/horusec-linux-amd64.tar.gz | tar -xz
+          sudo mv horusec /usr/local/bin/
+
+      - name: Ejecutar Horusec
+        run: |
+          horusec start \
+            -p ${{ github.workspace }} \
             --return-error \
             --output-format json \
-            --json-output-file /src/.horusec/horusec-report.json
+            --json-output-file ${{ github.workspace }}/.horusec/horusec-report.json

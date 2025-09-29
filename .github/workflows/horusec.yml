@@ -16,9 +16,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Limpiar posibles conflictos de containerd
+        run: |
+          sudo apt-mark unhold containerd || true
+          sudo apt-get remove -y containerd || true
+          sudo apt-get update
+
       - name: Instalar Docker
         run: |
-          sudo apt-get update
           sudo apt-get install -y docker.io
           sudo systemctl start docker
           sudo systemctl enable docker

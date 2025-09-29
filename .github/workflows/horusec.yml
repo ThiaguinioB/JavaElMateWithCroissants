@@ -30,7 +30,7 @@ jobs:
 
       # 🔍 Step 2: Ejecutar análisis de seguridad con Horusec CLI
       - name: Create Horusec report directory
-        run: mkdir -p /app/.horusec
+        run: sudo mkdir -p /app/.horusec
 
       - name: Run Horusec CLI
         run: |

@@ -363,7 +363,7 @@ export HORUSEC_MAX_LOW_VULNERABILITY=5
 
 ## 🚨 Troubleshooting
 
-### Problemas Comunes en GitHub Actions (Experiencia Real de 4 Horas de Debugging)
+### Problemas Comunes en GitHub Actions (Experiencia de muchas horas de Debugging)
 
 Durante la implementación del workflow de Horusec, encontramos varios problemas críticos que documentamos aquí para futuras referencias:
 
@@ -446,7 +446,7 @@ permissions:
 
 ### Proceso de Debugging Recomendado
 
-Basado en nuestra experiencia de 4 horas, recomendamos este proceso:
+Basado en nuestra experiencia de debugging, recomendamos este proceso:
 
 1. **🔍 Leer logs completos** - No solo el error final, sino todo el contexto
 2. **📋 Verificar comportamiento de herramientas** - Muchas eliminan archivos automáticamente

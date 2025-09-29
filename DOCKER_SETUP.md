@@ -232,21 +232,21 @@ docker run --rm -v $(pwd):/src horuszup/horusec-cli:v2.9.0-beta.3 \
 
 **Contexto**: Durante 4 horas de debugging intenso, encontramos problemas específicos con la integración de Horusec en GitHub Actions que documentamos aquí.
 
-#### **Cronología del Debugging (Septiembre 29, 2025)**
+#### **Cronología del Debugging (Septiembre, 2025)**
 
-**22:40 - Primer Intento**: Error de instalación duplicada
+**Primer Intento**: Error de instalación duplicada
 ```
 mv: cannot stat './horusec': No such file or directory
 ```
 **Causa**: Script oficial ya instala Horusec, pero workflow intentaba moverlo nuevamente.
 
-**22:51 - Segundo Intento**: Horusec se instala pero no genera reporte
+**Segundo Intento**: Horusec se instala pero no genera reporte
 ```
 Error: {HORUSEC_CLI} error creating and/or writing to the specified file
 ```
 **Causa**: Problemas de permisos en directorio de salida.
 
-**23:00 - Tercer Intento**: Directorio creado pero reporte desaparece
+**Tercer Intento**: Directorio creado pero reporte desaparece
 ```
 ❌ Output file is empty or missing: .horusec/horusec-report.json
 Directory .horusec does not exist

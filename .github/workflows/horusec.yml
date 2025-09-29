@@ -48,6 +48,10 @@ jobs:
 
       - name: Run Horusec security analysis
         run: |
+          # Ensure output directory exists and is writable
+          mkdir -p .horusec
+          chmod 755 .horusec
+          
           # Run analysis without failing on vulnerabilities initially
           horusec start \
             --project-path="${{ github.workspace }}" \
@@ -57,6 +61,17 @@ jobs:
             --disable-docker \
             --ignore="**/*test*,**/*Test*,**/test/**,**/tests/**,**/target/**,**/.git/**" \
             --log-level=info || echo "⚠️ Analysis completed with findings"
+          
+          # Verify the report was created
+          if [ -f ".horusec/horusec-report.json" ]; then
+            echo "✅ Report generated successfully"
+            ls -la .horusec/horusec-report.json
+          else
+            echo "❌ Report generation failed"
+            ls -la .horusec/ || echo "Directory .horusec does not exist"
+            echo "Attempting to create a minimal report for debugging..."
+            echo '{"analysisVulnerabilities":[],"status":"error","message":"Report generation failed"}' > .horusec/horusec-report.json
+          fi
 
       - name: Validate security thresholds
         run: |

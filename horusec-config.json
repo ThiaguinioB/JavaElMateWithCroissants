@@ -1,4 +1,13 @@
 {
+    "_comment": "🔧 Archivo de configuración para Horusec CLI",
+    "_description": "Este archivo define la configuración personalizada para el análisis de seguridad con Horusec CLI",
+    "_documentation": {
+        "horusecCliCustomRulesPath": "Ruta a reglas personalizadas (vacío = usar reglas por defecto)",
+        "horusecCliWorkDir": "Directorio de trabajo para el análisis",
+        "horusecCliSeveritiesToIgnore": "Severidades a ignorar en el reporte (LOW, MEDIUM, HIGH, CRITICAL)",
+        "horusecCliAuthorization": "Token de autorización para Horusec Platform (00000000-0000-0000-0000-000000000000 = sin autenticación)",
+        "horusecCliEnableGitHistory": "Habilitar análisis del historial de Git (puede ser lento en repos grandes)"
+    },
     "horusecCliCustomRulesPath": "",
     "horusecCliWorkDir": "./",
     "horusecCliSeveritiesToIgnore": [

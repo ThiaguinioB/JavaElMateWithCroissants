@@ -1,4 +1,4 @@
-# Pipeline CI de Horusec CLI integrado con Docker
+# Pipeline CI de Horusec CLI integrado con Docker, Gallardo esta Gaga
 name: Horusec Security Analysis
 
 on:

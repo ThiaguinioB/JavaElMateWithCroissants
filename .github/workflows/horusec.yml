@@ -19,36 +19,22 @@ on:
     branches: [ "main" ]                    # Se ejecuta en PRs hacia main para validar antes del merge
 
 jobs:
-  horusec:
-    runs-on: ubuntu-latest                  # Ejecuta en la última versión de Ubuntu
-
+  horusec-security:
+    runs-on: ubuntu-latest
     steps:
-      # 📦 Step 1: Obtener el código fuente del repositorio
-      - name: Checkout code
-        uses: actions/checkout@v4
-        # Descarga todo el código del repositorio para que Horusec pueda analizarlo
-
-      # 🔍 Step 2: Crear directorio para el reporte de Horusec
-      - name: Crear directorio para reporte Horusec
-        run: mkdir -p .horusec
-
-      # 🐳 Step 3: Ejecutar análisis de seguridad con Horusec usando Docker
-      - name: Ejecutar Horusec con Docker
-        # Usamos la imagen oficial de Horusec para evitar problemas de descarga de binarios
+      - uses: actions/checkout@v4
+      - name: Reiniciar Docker
+        run: |
+          sudo systemctl restart docker
+          sudo systemctl enable docker
+      - name: Verificar Docker
+        run: docker ps
+      - name: Ejecutar análisis Horusec
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:/src \
             horuszup/horusec-cli horusec start \
-              -p /src \
-              --return-error \
-              --output-format json \
-              --json-output-file /src/.horusec/horusec-report.json
-        # Así evitamos el error 404 por la descarga del binario
-
-      # 📋 Step 4: Subir reporte como artifact para descarga y revisión
-      - name: Upload Horusec report
-        uses: actions/upload-artifact@v4
-        if: always()                        # Ejecutar siempre, incluso si hay errores
-        with:
-          name: horusec-report             # Nombre del artifact
-          path: .horusec/horusec-report.json  # Archivo a subir (disponible para descarga desde GitHub)
+            -p /src \
+            --return-error \
+            --output-format json \
+            --json-output-file /src/.horusec/horusec-report.json

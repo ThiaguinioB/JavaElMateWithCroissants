@@ -4,15 +4,15 @@ Esta documentación explica cada archivo de configuración del sistema de análi
 
 ## 📁 Índice de Archivos
 
-| Archivo | Propósito | Uso |
-|---------|-----------|-----|
-| [`.github/workflows/horusec.yml`](#github-workflow) | GitHub Actions CI/CD | Automatización |
-| [`docker-compose.horusec.yml`](#docker-compose-cicd) | Análisis CI/CD | Desarrollo/CI |
-| [`docker-compose.horusec-platform.yml`](#docker-compose-platform) | Plataforma completa | Desarrollo local |
-| [`Dockerfile.horusec`](#dockerfile) | Imagen personalizada | Construcción |
-| [`horusec-config.json`](#configuracion-horusec) | Configuración CLI | Análisis |
-| [`validate_thresholds.sh`](#script-validacion) | Validación umbrales | Post-análisis |
-| [`init-databases.sql`](#base-datos) | Inicialización BD | Setup inicial |
+| Archivo | Propósito | Estado | Uso |
+|---------|-----------|--------|-----|
+| [`.github/workflows/horusec.yml`](#github-workflow) | GitHub Actions CI/CD | ✅ **Activo** | Automatización |
+| [`docker-compose.horusec.yml`](#docker-compose-cicd) | Análisis CI/CD | ✅ **Activo** | Desarrollo/CI |
+| [`docker-compose.horusec-platform.yml`](#docker-compose-platform) | Plataforma completa | ⚠️ **Deprecado** | Desarrollo local |
+| [`Dockerfile.horusec`](#dockerfile) | Imagen personalizada | ✅ **Activo** | Construcción |
+| [`horusec-config.json`](#configuracion-horusec) | Configuración CLI | ✅ **Activo** | Análisis |
+| [`validate_thresholds.sh`](#script-validacion) | Validación umbrales | ✅ **Activo** | Post-análisis |
+| [`init-databases.sql`](#base-datos) | Inicialización BD | ⚠️ **Deprecado** | Setup inicial |
 
 ---
 
@@ -145,8 +145,18 @@ docker-compose -f docker-compose.horusec.yml up --build
 
 **Archivo**: `docker-compose.horusec-platform.yml`
 
-### Propósito
-Infraestructura completa para desarrollo local con interfaz web.
+### ⚠️ **ESTADO: DEPRECADO**
+
+**Nota Importante**: Este archivo fue creado durante el desarrollo del proyecto, pero posteriormente fue descartado debido a que **Horusec Platform y Horusec Manager están oficialmente deprecados** por el equipo de desarrollo de Horusec.
+
+**Razones del descarte**:
+- 🚫 Horusec Platform ya no recibe actualizaciones
+- 🚫 Horusec Manager no es compatible con versiones recientes
+- ✅ Horusec CLI sigue siendo la herramienta oficial y mantenida
+- ✅ GitHub Actions con Horusec CLI es la aproximación recomendada
+
+### Propósito Original
+Infraestructura completa para desarrollo local con interfaz web (ya no recomendada).
 
 ### Servicios Incluidos
 ```
@@ -309,10 +319,20 @@ export HORUSEC_MAX_LOW_VULNERABILITY=20
 
 **Archivo**: `init-databases.sql`
 
-### Propósito
-Script SQL para crear las bases de datos necesarias para Horusec Platform.
+### ⚠️ **ESTADO: DEPRECADO/DESCARTADO**
 
-### Bases de Datos Creadas
+**Nota Importante**: Este archivo fue creado durante el desarrollo del proyecto, pero posteriormente fue descartado debido a que **Horusec Platform y Horusec Manager están oficialmente deprecados** por el equipo de desarrollo de Horusec.
+
+**Razones del descarte**:
+- 🚫 Horusec Platform ya no recibe actualizaciones
+- 🚫 Las bases de datos asociadas no son necesarias con Horusec CLI
+- ✅ Horusec CLI funciona de manera independiente sin base de datos
+- ✅ GitHub Actions con Horusec CLI es la aproximación recomendada
+
+### Propósito Original
+Script SQL para crear las bases de datos necesarias para Horusec Platform (ya no usado).
+
+### Bases de Datos Originalmente Planificadas
 - `horusec_api`: Datos de proyectos y análisis
 - `horusec_auth`: Usuarios y autenticación
 - `horusec_core`: Configuraciones del motor
@@ -320,7 +340,7 @@ Script SQL para crear las bases de datos necesarias para Horusec Platform.
 - `horusec_messages`: Cola de mensajes
 
 ### Estado Actual
-⚠️ **Nota**: Este script actualmente NO se usa automáticamente en el docker-compose, ya que Horusec maneja la creación de esquemas internamente.
+⚠️ **DESCARTADO**: Este script NO se usa ya que Horusec Platform está deprecado.
 
 ### Uso Manual
 ```bash
@@ -499,13 +519,36 @@ Basado en nuestra experiencia de debugging, recomendamos este proceso:
 
 ### Logs Útiles
 ```bash
-# CI/CD
+# CI/CD (Activo)
 docker-compose -f docker-compose.horusec.yml logs -f
 
-# Plataforma completa
-docker-compose -f docker-compose.horusec-platform.yml logs horusec-api
-docker-compose -f docker-compose.horusec-platform.yml logs postgres
+# Plataforma completa (DEPRECADO - NO USAR)
+# docker-compose -f docker-compose.horusec-platform.yml logs horusec-api
+# docker-compose -f docker-compose.horusec-platform.yml logs postgres
 ```
+
+---
+
+## 📋 Resumen del Estado Actual
+
+### ✅ Archivos Activos y Funcionales
+- `.github/workflows/horusec.yml` - **Workflow principal de CI/CD**
+- `horusec-config.json` - **Configuración de análisis de seguridad**
+- `validate_thresholds.sh` - **Script de validación de umbrales**
+- `docker-compose.horusec.yml` - **Entorno de desarrollo local**
+- `Dockerfile.horusec` - **Imagen personalizada (opcional)**
+
+### ⚠️ Archivos Deprecados/Descartados
+- `docker-compose.horusec-platform.yml` - **DEPRECADO** (Horusec Platform descontinuado)
+- `init-databases.sql` - **DESCARTADO** (No necesario con Horusec CLI)
+
+### 🎯 Recomendación Actual
+La configuración recomendada para análisis de seguridad es:
+1. **Horusec CLI** a través de GitHub Actions
+2. **Configuración JSON** para filtros de severidad
+3. **Scripts de validación** para umbrales automatizados
+
+> **Nota**: Horusec Platform/Manager está oficialmente deprecado. Se recomienda usar exclusivamente Horusec CLI.
 
 ---
 

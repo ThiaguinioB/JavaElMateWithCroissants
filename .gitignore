@@ -51,9 +51,3 @@ src/.horusec/
 
 # Horusec log file
 logHorusec.html
-
-# docker-compose.horusec-platform.yml
-docker-compose.horusec-platform.yml
-
-# init-databases.sql
-init-databases.sql

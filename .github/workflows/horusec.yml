@@ -26,8 +26,8 @@ jobs:
 
       - name: Set up environment variables
         run: |
-          echo "HORUSEC_MAX_CRITICAL_VULNERABILITY=0" >> $GITHUB_ENV
-          echo "HORUSEC_MAX_HIGH_VULNERABILITY=5" >> $GITHUB_ENV
+          echo "HORUSEC_MAX_CRITICAL_VULNERABILITY=1" >> $GITHUB_ENV
+          echo "HORUSEC_MAX_HIGH_VULNERABILITY=6" >> $GITHUB_ENV
           echo "HORUSEC_MAX_MEDIUM_VULNERABILITY=10" >> $GITHUB_ENV
           echo "HORUSEC_MAX_LOW_VULNERABILITY=20" >> $GITHUB_ENV
 

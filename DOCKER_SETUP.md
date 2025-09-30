@@ -81,9 +81,17 @@ open http://localhost:8043
 
 #### Para CI/CD (`docker-compose.horusec.yml`)
 ```bash
-# Umbrales de vulnerabilidades (opcional)
+# Umbrales de vulnerabilidades (no check)
 HORUSEC_MAX_CRITICAL_VULNERABILITY=0    # Máximo críticas permitidas
 HORUSEC_MAX_HIGH_VULNERABILITY=5        # Máximo altas permitidas  
+HORUSEC_MAX_MEDIUM_VULNERABILITY=10     # Máximo medias permitidas
+HORUSEC_MAX_LOW_VULNERABILITY=20        # Máximo bajas permitidas
+```
+
+```bash
+# Umbrales de vulnerabilidades (check)
+HORUSEC_MAX_CRITICAL_VULNERABILITY=1    # Máximo críticas permitidas
+HORUSEC_MAX_HIGH_VULNERABILITY=6        # Máximo altas permitidas  
 HORUSEC_MAX_MEDIUM_VULNERABILITY=10     # Máximo medias permitidas
 HORUSEC_MAX_LOW_VULNERABILITY=20        # Máximo bajas permitidas
 ```

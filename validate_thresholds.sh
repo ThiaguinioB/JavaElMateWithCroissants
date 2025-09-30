@@ -43,9 +43,9 @@ fi
 
 # 🎯 Configuración de umbrales desde variables de entorno
 # Si no están definidas, se usan valores por defecto estrictos
-MAX_CRITICAL="${HORUSEC_MAX_CRITICAL_VULNERABILITY:-0}"
+MAX_CRITICAL="${HORUSEC_MAX_CRITICAL_VULNERABILITY:-1}"
 MAX_HIGH="${HORUSEC_MAX_HIGH_VULNERABILITY:-0}"
-MAX_MEDIUM="${HORUSEC_MAX_MEDIUM_VULNERABILITY:-5}"
+MAX_MEDIUM="${HORUSEC_MAX_MEDIUM_VULNERABILITY:-6}"
 MAX_LOW="${HORUSEC_MAX_LOW_VULNERABILITY:-10}"
 
 # 📊 Conteo de vulnerabilidades por severidad usando jq

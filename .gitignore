@@ -42,3 +42,12 @@ build/
 
 # IntelliJ coverage
 .idea/**/coverage/
+
+# src/.horusec/
+src/.horusec/
+
+# Environment files
+.env
+
+# Horusec log file
+logHorusec.html

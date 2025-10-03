@@ -1,0 +1,46 @@
+# 🔒 Docker Compose para análisis de seguridad con Horusec CLI
+#
+# Este archivo define la configuración para ejecutar análisis de seguridad
+# usando Horusec CLI en un entorno containerizado.
+#
+# Características:
+# - Construye imagen personalizada con validación de umbrales
+# - Monta el código fuente como volumen para análisis
+# - Configura umbrales de vulnerabilidades mediante variables de entorno
+# - Persiste reportes en el sistema de archivos del host
+#
+# Uso: docker-compose -f docker-compose.horusec.yml up --build
+
+services:
+  # 🔍 Servicio principal: Horusec CLI con validación personalizada
+  horusec-cli:
+    # 🏗️ Construcción de imagen personalizada
+    build:
+      context: . # Contexto de construcción (directorio actual)
+      dockerfile: Dockerfile.horusec # Dockerfile específico para Horusec
+
+    # 🌍 Variables de entorno para configuración
+    environment:
+      # 📂 Ruta del proyecto en el host (para referencia)
+      - HOST_PROJECT_PATH=${PWD}
+
+      # 🚨 Umbrales de vulnerabilidades (definir según política de seguridad)
+      # Si no se definen, el script usará valores por defecto
+      - HORUSEC_MAX_CRITICAL_VULNERABILITY # Máximo de vulnerabilidades CRÍTICAS permitidas
+      - HORUSEC_MAX_HIGH_VULNERABILITY # Máximo de vulnerabilidades ALTAS permitidas  
+      - HORUSEC_MAX_MEDIUM_VULNERABILITY # Máximo de vulnerabilidades MEDIAS permitidas
+      - HORUSEC_MAX_LOW_VULNERABILITY # Máximo de vulnerabilidades BAJAS permitidas
+
+    # 💾 Volúmenes montados
+    volumes:
+      # 📁 Montar código fuente completo para análisis
+      - .:/src
+
+      # 🐳 Socket de Docker para análisis de containers (si es necesario)
+      - /var/run/docker.sock:/var/run/docker.sock
+
+      # 📋 Directorio de reportes persistente en el host
+      - ./src/.horusec:/src/.horusec # Asegura que el JSON se guarde en el host
+
+    # 📍 Directorio de trabajo dentro del container
+    working_dir: /src
